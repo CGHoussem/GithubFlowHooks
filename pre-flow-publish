@@ -103,7 +103,7 @@ def main(action, origin, branch):
         print('Unable to get github token from environment variables', file=sys.stderr)
         exit(1)
 
-    print('finish')
+    print(action)
 
     pr_id, pr_url = get_pr(token, branch)
     if action == 'publish':
