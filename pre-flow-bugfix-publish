@@ -51,7 +51,7 @@ def create_pr(token, branch):
     }
     data = {
         'title': f'Merge {branch} to {base}',
-        'head': f'CGHoussem:{branch}',
+        'head': f'{repo}:{branch}',
         'base': f'{base}',
     }
     response = requests.post(url, headers=headers, json=data)
