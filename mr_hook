@@ -51,10 +51,11 @@ def create_pr(token, branch):
     }
     data = {
         'title': f'Merge {branch} to {base}',
-        'head': f'{repo}:{branch}',
+        'head': f'CGHoussem:{branch}',
         'base': f'{base}',
     }
     response = requests.post(url, headers=headers, json=data)
+    print(data)
     print(response.json())
     if not response.ok:
         print(f'Unable to get create a pull request ({response.status_code}): {response.reason}', file=sys.stderr)
