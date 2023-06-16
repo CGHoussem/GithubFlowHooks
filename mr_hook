@@ -102,14 +102,23 @@ def main(action, origin, branch):
         print('Unable to get github token from environment variables', file=sys.stderr)
         exit(1)
 
-    print(action)
-
     pr_id, pr_url = get_pr(token, branch)
     if action == 'publish':
         if pr_id is None:
-            print('Creating a pull request..')
-            pr_id, pr_url = create_pr(token, branch)
-            print(f'Created a pull request ({pr_id}): {pr_url}')
+            cr_pr = False
+            while True:
+                response = input("Would you like to create a PR (Y/n)? ").strip().lower()
+                if response == 'y':
+                    cr_pr = True
+                    break
+                elif response == 'n':
+                    break
+                else:
+                    print("Invalid input. Please try again.")
+            if cr_pr:
+                print('Creating a pull request..')
+                pr_id, pr_url = create_pr(token, branch)
+                print(f'Created a pull request ({pr_id}): {pr_url}')
         else:
             print(f'Updating pull request: {pr_url}')
     elif action == 'finish':
