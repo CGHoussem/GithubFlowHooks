@@ -107,7 +107,7 @@ def main(action, origin, branch):
         if pr_id is None:
             cr_pr = False
             while True:
-                response = input("Would you like to create a PR (Y/n)? ").strip().lower()
+                response = input("Would you like to create a PR? [Y/n] ").strip().lower()
                 if response == 'y':
                     cr_pr = True
                     break
