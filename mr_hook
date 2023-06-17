@@ -108,7 +108,7 @@ def main(action, origin, branch):
             cr_pr = False
             while True:
                 response = input("Would you like to create a PR? [Y/n] ").strip().lower()
-                if response == 'y':
+                if response == 'y' or response == '':
                     cr_pr = True
                     break
                 elif response == 'n':
