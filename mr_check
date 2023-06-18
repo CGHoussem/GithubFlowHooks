@@ -47,7 +47,7 @@ def main(action, origin, branch):
     if pr is None:
         print('You need to publish first (in order to create the PR)')
         exit(1)
-    
+    print(pr)
     if pr['mergeable'] == 'null':
         print('A mergeability checking job is in progress..\n\
             Wait fot the job to complete and resubmit the request!')
