@@ -1,17 +1,1 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8; -*-
-
-import sys
-import os
-
-def main(action, origin, branch):
-    print(action, origin, branch)
-    # Get GITHUB service token
-    token = os.getenv('GITHUB_TOKEN')
-    if token is None or len(token) == 0:
-        print('Unable to get github token from environment variables', file=sys.stderr)
-        exit(1)
-
-if __name__ == '__main__':
-    action = sys.argv[0].split('-')[-1]
-    main(action, sys.argv[2], sys.argv[3])
+env_check
