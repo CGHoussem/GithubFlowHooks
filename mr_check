@@ -36,6 +36,8 @@ def get_projet_prs(token, branch):
 
 def get_pr(token, branch):
     prs = get_projet_prs(token, branch)
+    if prs is None:
+        return None
     pr_number = prs[0]['number']
     
     p = subprocess.Popen("git rev-parse --show-toplevel", stdout=subprocess.PIPE, shell=True)
