@@ -104,6 +104,12 @@ def git_fetch_pull():
 def git_delete_branch(branch):
     subprocess.run(['git', 'branch', 'delete', '-D', branch])
 
+<<<<<<< HEAD
+=======
+def git_push_tags():
+    subprocess.run(['git', 'push', '--tags'])
+
+>>>>>>> release/v0.1.3
 
 def main(action, origin, branch):
     # Get GITHUB service token
@@ -140,7 +146,7 @@ def main(action, origin, branch):
 
         git_reset_hard()
         git_fetch_pull()
-        git_delete_branch(branch)
+        git_push_tags()
 
 if __name__ == '__main__':
     action = sys.argv[0].split('-')[-1]
