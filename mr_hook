@@ -94,6 +94,13 @@ def merge_pr(token, branch, pr_number):
 
     return response.json()['message']
 
+def git_reset_hard():
+    subprocess.run(['git', 'reset', '--hard', 'HEAD~1'])
+
+def git_fetch_pull():
+    subprocess.run(['git', 'fetch'])
+    subprocess.run(['git', 'pull'])
+
 
 def main(action, origin, branch):
     # Get GITHUB service token
@@ -125,8 +132,11 @@ def main(action, origin, branch):
         if pr_number is None:
             print('You need to publish first (in order to create the PR)')
             exit(1)
-        msg = merge_pr(token, branch, pr_number)
-        print(msg)
+        mr_msg = merge_pr(token, branch, pr_number)
+        print(mr_msg)
+
+        git_reset_hard()
+        git_fetch_pull()
 
 if __name__ == '__main__':
     action = sys.argv[0].split('-')[-1]
