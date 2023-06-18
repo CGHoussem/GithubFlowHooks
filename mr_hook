@@ -54,7 +54,9 @@ def create_pr(token, branch):
         'head': f'CGHoussem:{branch}',
         'base': f'{base}',
     }
+    print(data)
     response = requests.post(url, headers=headers, json=data)
+    print(response)
     if not response.ok:
         print(f'Unable to get create a pull request ({response.status_code}): {response.reason}', file=sys.stderr)
         exit(1)
