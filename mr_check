@@ -7,7 +7,7 @@ import os
 import requests
 import subprocess
 
-def get_pr(token, branch):
+def get_projet_prs(token, branch):
     p = subprocess.Popen("git rev-parse --show-toplevel", stdout=subprocess.PIPE, shell=True)
     (output, err) = p.communicate()
     p_status = p.wait()
@@ -32,7 +32,34 @@ def get_pr(token, branch):
     if len(jsonObj) <= 0:
         return None
 
-    return jsonObj[0]
+    return jsonObj
+
+def get_pr(token, branch):
+    prs = get_projet_prs(token, branch)
+    pr_number = prs[0]['number']
+    
+    p = subprocess.Popen("git rev-parse --show-toplevel", stdout=subprocess.PIPE, shell=True)
+    (output, err) = p.communicate()
+    p_status = p.wait()
+    repo = os.path.basename(output.decode()).strip()
+
+    url = f'https://api.github.com/repos/CGHoussem/{repo}/pulls/{pr_number}'
+    headers = {
+            'Accept': 'application/vnd.github+json',
+            'Authorization': f'Bearer {token}',
+            'X-GitHub-Api-Version': '2022-11-28'
+    }
+    params = {
+            'head': f'CGHoussem:{branch}',
+    }
+    response = requests.get(url, params=params, headers=headers)
+
+    if not response.ok:
+        print(f'Unable to get the pull request #{pr_number} ({response.status_code}): {response.reason}', file=sys.stderr)
+        exit(1)
+    jsonObj = response.json()
+
+    return jsonObj
 
 
 def main(action, origin, branch):
@@ -47,7 +74,6 @@ def main(action, origin, branch):
     if pr is None:
         print('You need to publish first (in order to create the PR)')
         exit(1)
-    print(pr)
     if pr['mergeable'] == 'null':
         print('A mergeability checking job is in progress..\n\
             Wait fot the job to complete and resubmit the request!')
