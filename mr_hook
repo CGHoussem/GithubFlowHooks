@@ -32,7 +32,7 @@ def get_pr(token, branch):
     if len(jsonObj) <= 0:
         return None, None
 
-    return jsonObj[0]['id'], jsonObj[0]['html_url']
+    return jsonObj[0]['number'], jsonObj[0]['html_url']
 
 def create_pr(token, branch):
     p = subprocess.Popen("git rev-parse --show-toplevel", stdout=subprocess.PIPE, shell=True)
@@ -40,7 +40,7 @@ def create_pr(token, branch):
     p_status = p.wait()
     repo = os.path.basename(output.decode()).strip()
     base = 'develop'
-    if 'hotfix/' in branch:
+    if 'hotfix/' in branch or 'release/' in branch:
         base = 'master'
 
     url = f'https://api.github.com/repos/CGHoussem/{repo}/pulls'
@@ -60,24 +60,24 @@ def create_pr(token, branch):
         exit(1)
 
     try:
-        pr_id = response.json()['id']
+        pr_number = response.json()['number']
         pr_url = response.json()['html_url']
     except KeyError as err:
         print(f'Error getting id from response: {response.json()}', file=sys.stderr)
         exit(1)
 
-    return pr_id, pr_url
+    return pr_number, pr_url
 
-def merge_pr(token, branch, pr_id):
+def merge_pr(token, branch, pr_number):
     p = subprocess.Popen("git rev-parse --show-toplevel", stdout=subprocess.PIPE, shell=True)
     (output, err) = p.communicate()
     p_status = p.wait()
     repo = os.path.basename(output.decode()).strip()
     base = 'develop'
-    if 'hotfix/' in branch:
+    if 'hotfix/' in branch or 'release/' in branch:
         base = 'master'
 
-    url = f'https://api.github.com/repos/CGHoussem/{repo}/pulls/{pr_id}/merge'
+    url = f'https://api.github.com/repos/CGHoussem/{repo}/pulls/{pr_number}/merge'
     headers = {
         'Accept': 'application/vnd.github+json',
         'Authorization': f'Bearer {token}',
@@ -94,6 +94,16 @@ def merge_pr(token, branch, pr_id):
 
     return response.json()['message']
 
+def git_reset_hard():
+    subprocess.run(['git', 'reset', '--hard', 'HEAD~1'])
+
+def git_fetch_pull():
+    subprocess.run(['git', 'fetch'])
+    subprocess.run(['git', 'pull'])
+
+def git_delete_branch(branch):
+    subprocess.run(['git', 'branch', 'delete', '-D', branch])
+
 
 def main(action, origin, branch):
     # Get GITHUB service token
@@ -102,13 +112,13 @@ def main(action, origin, branch):
         print('Unable to get github token from environment variables', file=sys.stderr)
         exit(1)
 
-    pr_id, pr_url = get_pr(token, branch)
+    pr_number, pr_url = get_pr(token, branch)
     if action == 'publish':
-        if pr_id is None:
+        if pr_number is None:
             cr_pr = False
             while True:
                 response = input("Would you like to create a PR (Y/n)? ").strip().lower()
-                if response == 'y':
+                if response == 'y' or response == '':
                     cr_pr = True
                     break
                 elif response == 'n':
@@ -117,16 +127,20 @@ def main(action, origin, branch):
                     print("Invalid input. Please try again.")
             if cr_pr:
                 print('Creating a pull request..')
-                pr_id, pr_url = create_pr(token, branch)
-                print(f'Created a pull request ({pr_id}): {pr_url}')
+                pr_number, pr_url = create_pr(token, branch)
+                print(f'Created a pull request ({pr_number}): {pr_url}')
         else:
             print(f'Updating pull request: {pr_url}')
     elif action == 'finish':
-        if pr_id is None:
+        if pr_number is None:
             print('You need to publish first (in order to create the PR)')
             exit(1)
-        msg = merge_pr(token, branch, pr_id)
-        print(msg)
+        mr_msg = merge_pr(token, branch, pr_number)
+        print(mr_msg)
+
+        git_reset_hard()
+        git_fetch_pull()
+        git_delete_branch(branch)
 
 if __name__ == '__main__':
     action = sys.argv[0].split('-')[-1]
