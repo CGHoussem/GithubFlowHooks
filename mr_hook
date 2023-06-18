@@ -74,7 +74,7 @@ def merge_pr(token, branch, pr_number):
     p_status = p.wait()
     repo = os.path.basename(output.decode()).strip()
     base = 'develop'
-    if 'hotfix/' in branch:
+    if 'hotfix/' in branch or 'release/' in branch:
         base = 'master'
 
     url = f'https://api.github.com/repos/CGHoussem/{repo}/pulls/{pr_number}/merge'
