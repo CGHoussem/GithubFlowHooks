@@ -74,7 +74,7 @@ def merge_pr(token, branch, pr_number):
     p_status = p.wait()
     repo = os.path.basename(output.decode()).strip()
     base = 'develop'
-    if 'hotfix/' in branch:
+    if 'hotfix/' in branch or 'release/' in branch:
         base = 'master'
 
     url = f'https://api.github.com/repos/CGHoussem/{repo}/pulls/{pr_number}/merge'
@@ -100,6 +100,9 @@ def git_reset_hard():
 def git_fetch_pull():
     subprocess.run(['git', 'fetch'])
     subprocess.run(['git', 'pull'])
+
+def git_delete_branch(branch):
+    subprocess.run(['git', 'branch', 'delete', '-D', branch])
 
 
 def main(action, origin, branch):
@@ -137,6 +140,7 @@ def main(action, origin, branch):
 
         git_reset_hard()
         git_fetch_pull()
+        git_delete_branch(branch)
 
 if __name__ == '__main__':
     action = sys.argv[0].split('-')[-1]
