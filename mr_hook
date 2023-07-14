@@ -94,6 +94,32 @@ def merge_pr(token, branch, pr_number):
 
     return response.json()['message']
 
+def msg_merge_pr(token, branch, pr_number):
+    p = subprocess.Popen("git rev-parse --show-toplevel", stdout=subprocess.PIPE, shell=True)
+    (output, err) = p.communicate()
+    p_status = p.wait()
+    repo = os.path.basename(output.decode()).strip()
+    base = 'develop'
+    if 'hotfix/' in branch or 'release/' in branch:
+        base = 'master'
+
+    url = f'https://api.github.com/repos/CGHoussem/{repo}/pulls/{pr_number}/merge'
+    headers = {
+        'Accept': 'application/vnd.github+json',
+        'Authorization': f'Bearer {token}',
+        'X-GitHub-Api-Version': '2022-11-28'
+    }
+    data = {
+        'body': 'This PR has been merged via a git flow finish',
+    }
+    response = requests.patch(url, headers=headers, json=data)
+
+    if not response.ok:
+        print(f'Unable to patch the pull request ({response.status_code}): {response.reason}', file=sys.stderr)
+        exit(1)
+
+    return response.json()['message']
+
 def git_reset_hard():
     subprocess.run(['git', 'reset', '--hard', 'HEAD~1'])
 
@@ -138,7 +164,7 @@ def main(action, origin, branch):
         if pr_number is None:
             print('You need to publish first (in order to create the PR)')
             exit(1)
-        mr_msg = merge_pr(token, branch, pr_number)
+        mr_msg = msg_merge_pr(token, branch, pr_number)
         print(mr_msg)
 
         git_reset_hard()
