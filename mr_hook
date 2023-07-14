@@ -69,33 +69,13 @@ def create_pr(token, branch):
 
     return pr_number, pr_url
 
-def git_reset_hard():
-    subprocess.run(['git', 'reset', '--hard', 'HEAD~1'])
-
-def git_fetch_pull():
-    subprocess.run(['git', 'fetch'])
-    subprocess.run(['git', 'pull'])
-
-def git_delete_branch(branch):
-    subprocess.run(['git', 'branch', 'delete', '-D', branch])
-
-def git_push_tags():
-    subprocess.run(['git', 'push', '--tags'])
-
-def git_push_branches():
+def process_after_finish():
     subprocess.run(['git', 'push'])
     subprocess.run(['git', 'checkout', 'master'])
     subprocess.run(['git', 'push'])
-
-def git_rebase_develop():
     subprocess.run(['git', 'rebase', 'develop'])
-
-def process_after_finish():
-    git_reset_hard()
-    git_fetch_pull()
-    git_push_tags()
-    git_push_branches()
-    git_rebase_develop()
+    subprocess.run(['git', 'push'])
+    subprocess.run(['git', 'push', '--tags'])
 
 def main(action, origin, branch):
     # Get GITHUB service token

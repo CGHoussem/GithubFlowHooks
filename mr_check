@@ -74,7 +74,6 @@ def msg_merge_pr(token, branch, pr_number):
         base = 'master'
 
     url = f'https://api.github.com/repos/CGHoussem/{repo}/pulls/{pr_number}'
-    print(url)
     headers = {
         'Accept': 'application/vnd.github+json',
         'Authorization': f'Bearer {token}',
