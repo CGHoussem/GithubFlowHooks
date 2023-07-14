@@ -73,7 +73,8 @@ def msg_merge_pr(token, branch, pr_number):
     if 'hotfix/' in branch or 'release/' in branch:
         base = 'master'
 
-    url = f'https://api.github.com/repos/CGHoussem/{repo}/pulls/{pr_number}/merge'
+    url = f'https://api.github.com/repos/CGHoussem/{repo}/pulls/{pr_number}'
+    print(url)
     headers = {
         'Accept': 'application/vnd.github+json',
         'Authorization': f'Bearer {token}',
@@ -87,8 +88,6 @@ def msg_merge_pr(token, branch, pr_number):
     if not response.ok:
         print(f'Unable to patch the pull request ({response.status_code}): {response.reason}', file=sys.stderr)
         exit(1)
-
-    return response.json()['message']
 
 def main(action, origin, branch):
     # Get GITHUB service token
