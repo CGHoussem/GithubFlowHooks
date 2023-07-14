@@ -7,6 +7,7 @@ import os
 import requests
 import subprocess
 
+
 def get_projet_prs(token, branch):
     p = subprocess.Popen("git rev-parse --show-toplevel", stdout=subprocess.PIPE, shell=True)
     (output, err) = p.communicate()
@@ -63,6 +64,31 @@ def get_pr(token, branch):
 
     return jsonObj
 
+def msg_merge_pr(token, branch, pr_number):
+    p = subprocess.Popen("git rev-parse --show-toplevel", stdout=subprocess.PIPE, shell=True)
+    (output, err) = p.communicate()
+    p_status = p.wait()
+    repo = os.path.basename(output.decode()).strip()
+    base = 'develop'
+    if 'hotfix/' in branch or 'release/' in branch:
+        base = 'master'
+
+    url = f'https://api.github.com/repos/CGHoussem/{repo}/pulls/{pr_number}/merge'
+    headers = {
+        'Accept': 'application/vnd.github+json',
+        'Authorization': f'Bearer {token}',
+        'X-GitHub-Api-Version': '2022-11-28'
+    }
+    data = {
+        'body': 'This PR has been merged via a git flow finish',
+    }
+    response = requests.patch(url, headers=headers, json=data)
+
+    if not response.ok:
+        print(f'Unable to patch the pull request ({response.status_code}): {response.reason}', file=sys.stderr)
+        exit(1)
+
+    return response.json()['message']
 
 def main(action, origin, branch):
     # Get GITHUB service token
@@ -83,6 +109,10 @@ def main(action, origin, branch):
     elif pr['mergeable'] == 'false':
         print('Unable to merge PR due to failed checks.')
         exit(1)
+
+    # update body of PR
+    msg_merge_pr(token, branch, pr['number'])
+
 
 if __name__ == '__main__':
     action = sys.argv[0].split('-')[-1]
