@@ -69,13 +69,14 @@ def create_pr(token, branch):
 
     return pr_number, pr_url
 
-def process_after_finish():
+def process_after_finish(branch):
     subprocess.run(['git', 'push'])
-    subprocess.run(['git', 'checkout', 'master'])
-    subprocess.run(['git', 'push'])
-    subprocess.run(['git', 'rebase', 'develop'])
-    subprocess.run(['git', 'push'])
-    subprocess.run(['git', 'push', '--tags'])
+    if 'hotfix/' in branch or 'release/' in branch:
+        subprocess.run(['git', 'checkout', 'master'])
+        subprocess.run(['git', 'push'])
+        subprocess.run(['git', 'rebase', 'develop'])
+        subprocess.run(['git', 'push'])
+        subprocess.run(['git', 'push', '--tags'])
 
 def main(action, origin, branch):
     # Get GITHUB service token
@@ -108,7 +109,7 @@ def main(action, origin, branch):
             print('You need to publish first (in order to create the PR)')
             exit(1)
 
-        process_after_finish()
+        process_after_finish(branch)
 
 if __name__ == '__main__':
     action = sys.argv[0].split('-')[-1]
