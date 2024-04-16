@@ -7,9 +7,10 @@ import os
 def main(action, origin, branch):
     print(action, origin, branch)
     # Get GITHUB service token
-    token = os.getenv('GITHUB_TOKEN')
-    if token is None or len(token) == 0:
-        print('Unable to get github token from environment variables', file=sys.stderr)
+    cghoussem_token = os.getenv('GITHUB_CGHOUSSEM_TOKEN')
+    pxbrain_token = os.getenv('GITHUB_PXBRAIN_TOKEN')
+    if cghoussem_token is None or pxbrain_token is None or len(cghoussem_token) == 0 or len(pxbrain_token) == 0:
+        print('Unable to get github tokens from environment variables', file=sys.stderr)
         exit(1)
 
 if __name__ == '__main__':

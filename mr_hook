@@ -3,25 +3,52 @@
 
 import sys
 import os
+import re
 
 import requests
 import subprocess
 
 
+def get_github_owner_from_git():
+    # Get the remote URL of the Git repository
+    try:
+        remote_url_bytes = subprocess.check_output(['git', 'config', '--get', 'remote.origin.url'])
+        remote_url = remote_url_bytes.decode().strip()
+    except subprocess.CalledProcessError:
+        print("Failed to retrieve Git remote URL.")
+        return None
+
+    # Regular expression patterns for matching GitHub repository URLs
+    ssh_pattern = r'^git@github\.com:([^/]+)/.*$'
+    https_pattern = r'^https://github\.com/([^/]+)/.*$'
+
+    # Check if the remote URL matches GitHub repository URL patterns
+    if re.match(ssh_pattern, remote_url):
+        owner_name = re.match(ssh_pattern, remote_url).group(1)
+    elif re.match(https_pattern, remote_url):
+        owner_name = re.match(https_pattern, remote_url).group(1)
+    else:
+        print("Remote URL is not a GitHub repository.")
+        return None
+
+    return owner_name
+
+
 def get_pr(token, branch):
     p = subprocess.Popen("git rev-parse --show-toplevel", stdout=subprocess.PIPE, shell=True)
-    (output, err) = p.communicate()
-    p_status = p.wait()
+    (output, _) = p.communicate()
+    _ = p.wait()
     repo = os.path.basename(output.decode()).strip()
+    owner = get_github_owner_from_git()
 
-    url = f'https://api.github.com/repos/CGHoussem/{repo}/pulls'
+    url = f'https://api.github.com/repos/{owner}/{repo}/pulls'
     headers = {
             'Accept': 'application/vnd.github+json',
             'Authorization': f'Bearer {token}',
             'X-GitHub-Api-Version': '2022-11-28'
     }
     params = {
-            'head': f'CGHoussem:{branch}',
+            'head': f'{owner}:{branch}',
     }
     response = requests.get(url, params=params, headers=headers)
 
@@ -37,14 +64,15 @@ def get_pr(token, branch):
 
 def create_pr(token, branch):
     p = subprocess.Popen("git rev-parse --show-toplevel", stdout=subprocess.PIPE, shell=True)
-    (output, err) = p.communicate()
-    p_status = p.wait()
+    (output, _) = p.communicate()
+    _ = p.wait()
     repo = os.path.basename(output.decode()).strip()
     base = 'develop'
     if 'hotfix/' in branch or 'release/' in branch:
         base = 'master'
+    owner = get_github_owner_from_git()
 
-    url = f'https://api.github.com/repos/CGHoussem/{repo}/pulls'
+    url = f'https://api.github.com/repos/{owner}/{repo}/pulls'
     headers = {
         'Accept': 'application/vnd.github+json',
         'Authorization': f'Bearer {token}',
@@ -52,7 +80,7 @@ def create_pr(token, branch):
     }
     data = {
         'title': f'Merge {branch} to {base}',
-        'head': f'CGHoussem:{branch}',
+        'head': f'{owner}:{branch}',
         'base': f'{base}',
     }
     response = requests.post(url, headers=headers, json=data)
@@ -64,7 +92,7 @@ def create_pr(token, branch):
         pr_number = response.json()['number']
         pr_url = response.json()['html_url']
     except KeyError as err:
-        print(f'Error getting id from response: {response.json()}', file=sys.stderr)
+        print(f'Error ({err}) getting id from response: {response.json()}', file=sys.stderr)
         exit(1)
 
     return pr_number, pr_url
@@ -79,8 +107,14 @@ def process_after_finish(branch):
         subprocess.run(['git', 'push', '--tags'])
 
 def main(action, origin, branch):
+    # Get current project owner
+    owner = get_github_owner_from_git()
+    if owner is None:
+        print('Unable to get the owner of the project!', file=sys.stderr)
+        exit(1)
+
     # Get GITHUB service token
-    token = os.getenv('GITHUB_TOKEN')
+    token = os.getenv(f'GITHUB_{owner.upper()}_TOKEN')
     if token is None or len(token) == 0:
         print('Unable to get github token from environment variables', file=sys.stderr)
         exit(1)
