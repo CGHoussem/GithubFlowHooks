@@ -42,8 +42,12 @@ def main(action, origin, branch):
 
     gitconfig = configparser.ConfigParser()
     gitconfig.read(f'{os.getenv("HOME")}/.gitconfig')
-    user_token = gitconfig['gitflow "token"'][owner]
-    print(user_token)
+    try:
+        user_token = gitconfig['gitflow "token"'][owner]
+        print(user_token)
+    except KeyError:
+        print(f'Unable to get the github token from gitconfig for the owner: {owner}', file=sys.stderr)
+
     exit(1)
 
     # # Get GITHUB service token
