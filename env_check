@@ -3,15 +3,55 @@
 
 import sys
 import os
+import re
+import subprocess
+import configparser
+
+
+def get_github_owner_from_git():
+    # Get the remote URL of the Git repository
+    try:
+        remote_url_bytes = subprocess.check_output(['git', 'config', '--get', 'remote.origin.url'])
+        remote_url = remote_url_bytes.decode().strip()
+    except subprocess.CalledProcessError:
+        print("Failed to retrieve Git remote URL.")
+        return None
+
+    # Regular expression patterns for matching GitHub repository URLs
+    ssh_pattern = r'^git@github\.com:([^/]+)/.*$'
+    https_pattern = r'^https://github\.com/([^/]+)/.*$'
+
+    # Check if the remote URL matches GitHub repository URL patterns
+    if re.match(ssh_pattern, remote_url):
+        owner_name = re.match(ssh_pattern, remote_url).group(1)
+    elif re.match(https_pattern, remote_url):
+        owner_name = re.match(https_pattern, remote_url).group(1)
+    else:
+        print("Remote URL is not a GitHub repository.")
+        return None
+
+    return owner_name
 
 def main(action, origin, branch):
     print(action, origin, branch)
-    # Get GITHUB service token
-    cghoussem_token = os.getenv('GITHUB_CGHOUSSEM_TOKEN')
-    pxbrain_token = os.getenv('GITHUB_PXBRAIN_TOKEN')
-    if cghoussem_token is None or pxbrain_token is None or len(cghoussem_token) == 0 or len(pxbrain_token) == 0:
-        print('Unable to get github tokens from environment variables', file=sys.stderr)
+    
+    owner = get_github_owner_from_git()
+    if owner is None:
+        print('Unable to get the owner of the git project', file=sys.stderr)
         exit(1)
+
+    gitconfig = configparser.ConfigParser()
+    gitconfig.read(f'{os.getenv("HOME")}/.gitconfig')
+    user_token = gitconfig['gitflow "token"'][owner]
+    print(user_token)
+    exit(1)
+
+    # # Get GITHUB service token
+    # cghoussem_token = os.getenv('GITHUB_CGHOUSSEM_TOKEN')
+    # pxbrain_token = os.getenv('GITHUB_PXBRAIN_TOKEN')
+    # if cghoussem_token is None or pxbrain_token is None or len(cghoussem_token) == 0 or len(pxbrain_token) == 0:
+    #     print('Unable to get github tokens from environment variables', file=sys.stderr)
+    #     exit(1)
 
 if __name__ == '__main__':
     action = sys.argv[0].split('-')[-1]
