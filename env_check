@@ -4,18 +4,15 @@
 import sys
 import utils
 
+
 def main(action, origin, branch):
     print(action, origin, branch)
-    token = utils.get_token()
-    print('token is:', token)
-    exit(1)
 
-    # # Get GITHUB service token
-    # cghoussem_token = os.getenv('GITHUB_CGHOUSSEM_TOKEN')
-    # pxbrain_token = os.getenv('GITHUB_PXBRAIN_TOKEN')
-    # if cghoussem_token is None or pxbrain_token is None or len(cghoussem_token) == 0 or len(pxbrain_token) == 0:
-    #     print('Unable to get github tokens from environment variables', file=sys.stderr)
-    #     exit(1)
+    try:
+       _ = utils.get_token()
+    except Exception as ex:
+        print(f'Unable to get GitHub PAT: {str(ex)}', file=sys.stderr)
+        exit(1)
 
 if __name__ == '__main__':
     action = sys.argv[0].split('-')[-1]

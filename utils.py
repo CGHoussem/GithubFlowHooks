@@ -1,5 +1,4 @@
 import os
-import sys
 import re
 import subprocess
 import configparser
@@ -34,19 +33,18 @@ def get_token():
 
     owner = get_github_owner_from_git()
     if owner is None:
-        print('Unable to get the owner of the git project', file=sys.stderr)
-        return None
+        raise Exception('Unable to get the owner of the git project')
 
     gitconfig = configparser.ConfigParser()
     gitconfig.read(f'{os.getenv("HOME")}/.gitconfig')
     try:
-        token = gitconfig['gitflow "token"'][owner]
+        token = gitconfig.get('gitflow "token"', option=owner)
         if token and len(token) == 0:
-            print(f'Github token of the owner "{owner}" is not configured correctly', file=sys.stderr)
-            return None
-    except KeyError:
-        print(f'Unable to get the github token from gitconfig for the owner: {owner}', file=sys.stderr)
-        return None
+            raise Exception(f'Github token of the owner "{owner}" is not configured correctly')
+    except configparser.NoOptionError as err:
+        raise Exception(err.message)
+    except configparser.NoSectionError as err:
+        raise Exception(err.message)
     
     return token
 
