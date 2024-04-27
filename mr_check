@@ -7,21 +7,24 @@ import os
 import requests
 import subprocess
 
+import utils
+
 
 def get_projet_prs(token, branch):
     p = subprocess.Popen("git rev-parse --show-toplevel", stdout=subprocess.PIPE, shell=True)
-    (output, err) = p.communicate()
-    p_status = p.wait()
+    (output, _) = p.communicate()
+    _ = p.wait()
     repo = os.path.basename(output.decode()).strip()
+    owner = utils.get_github_owner_from_git()
 
-    url = f'https://api.github.com/repos/CGHoussem/{repo}/pulls'
+    url = f'https://api.github.com/repos/{owner}/{repo}/pulls'
     headers = {
             'Accept': 'application/vnd.github+json',
             'Authorization': f'Bearer {token}',
             'X-GitHub-Api-Version': '2022-11-28'
     }
     params = {
-            'head': f'CGHoussem:{branch}',
+            'head': f'{owner}:{branch}',
     }
     response = requests.get(url, params=params, headers=headers)
 
@@ -42,18 +45,19 @@ def get_pr(token, branch):
     pr_number = prs[0]['number']
     
     p = subprocess.Popen("git rev-parse --show-toplevel", stdout=subprocess.PIPE, shell=True)
-    (output, err) = p.communicate()
-    p_status = p.wait()
+    (output, _) = p.communicate()
+    _ = p.wait()
     repo = os.path.basename(output.decode()).strip()
+    owner = utils.get_github_owner_from_git()
 
-    url = f'https://api.github.com/repos/CGHoussem/{repo}/pulls/{pr_number}'
+    url = f'https://api.github.com/repos/{owner}/{repo}/pulls/{pr_number}'
     headers = {
             'Accept': 'application/vnd.github+json',
             'Authorization': f'Bearer {token}',
             'X-GitHub-Api-Version': '2022-11-28'
     }
     params = {
-            'head': f'CGHoussem:{branch}',
+            'head': f'{owner}:{branch}',
     }
     response = requests.get(url, params=params, headers=headers)
 
@@ -66,14 +70,12 @@ def get_pr(token, branch):
 
 def msg_merge_pr(token, branch, pr_number):
     p = subprocess.Popen("git rev-parse --show-toplevel", stdout=subprocess.PIPE, shell=True)
-    (output, err) = p.communicate()
-    p_status = p.wait()
+    (output, _) = p.communicate()
+    _ = p.wait()
     repo = os.path.basename(output.decode()).strip()
-    base = 'develop'
-    if 'hotfix/' in branch or 'release/' in branch:
-        base = 'master'
+    owner = utils.get_github_owner_from_git()
 
-    url = f'https://api.github.com/repos/CGHoussem/{repo}/pulls/{pr_number}'
+    url = f'https://api.github.com/repos/{owner}/{repo}/pulls/{pr_number}'
     headers = {
         'Accept': 'application/vnd.github+json',
         'Authorization': f'Bearer {token}',
@@ -90,11 +92,7 @@ def msg_merge_pr(token, branch, pr_number):
 
 def main(action, origin, branch):
     # Get GITHUB service token
-    token = os.getenv('GITHUB_TOKEN')
-    if token is None or len(token) == 0:
-        print('Unable to get github token from environment variables', file=sys.stderr)
-        exit(1)
-
+    token = utils.get_token() 
     pr = get_pr(token, branch)
 
     if pr is None:
