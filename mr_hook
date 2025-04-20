@@ -1,117 +1,108 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8; -*-
 
-import sys
 import os
+import subprocess
+import sys
 
 import requests
-import subprocess
 
 import utils
 
 
-def get_pr(token, branch):
-    p = subprocess.Popen("git rev-parse --show-toplevel", stdout=subprocess.PIPE, shell=True)
-    (output, _) = p.communicate()
-    _ = p.wait()
-    repo = os.path.basename(output.decode()).strip()
-    owner = utils.get_github_owner_from_git()
-
-    url = f'https://api.github.com/repos/{owner}/{repo}/pulls'
-    headers = {
-            'Accept': 'application/vnd.github+json',
-            'Authorization': f'Bearer {token}',
-            'X-GitHub-Api-Version': '2022-11-28'
-    }
-    params = {
-            'head': f'{owner}:{branch}',
-    }
-    response = requests.get(url, params=params, headers=headers)
-
-    if not response.ok:
-        print(f'Unable to get pull requests ({response.status_code}): {response.reason}', file=sys.stderr)
-        exit(1)
-    jsonObj = response.json()
-
-    if len(jsonObj) <= 0:
-        return None, None
-
-    return jsonObj[0]['number'], jsonObj[0]['html_url']
-
 def create_pr(token, branch):
-    p = subprocess.Popen("git rev-parse --show-toplevel", stdout=subprocess.PIPE, shell=True)
+    p = subprocess.Popen(
+        "git rev-parse --show-toplevel", stdout=subprocess.PIPE, shell=True
+    )
     (output, _) = p.communicate()
     _ = p.wait()
     repo = os.path.basename(output.decode()).strip()
-    base = 'develop'
-    if 'hotfix/' in branch or 'release/' in branch:
-        base = 'master'
+    base = "develop"
+    if "hotfix/" in branch or "release/" in branch:
+        base = "master"
     owner = utils.get_github_owner_from_git()
 
-    url = f'https://api.github.com/repos/{owner}/{repo}/pulls'
+    url = f"https://api.github.com/repos/{owner}/{repo}/pulls"
     headers = {
-        'Accept': 'application/vnd.github+json',
-        'Authorization': f'Bearer {token}',
-        'X-GitHub-Api-Version': '2022-11-28'
+        "Accept": "application/vnd.github+json",
+        "Authorization": f"Bearer {token}",
+        "X-GitHub-Api-Version": "2022-11-28",
     }
     data = {
-        'title': f'Merge {branch} to {base}',
-        'head': f'{owner}:{branch}',
-        'base': f'{base}',
+        "title": f"Merge {branch} to {base}",
+        "head": f"{owner}:{branch}",
+        "base": f"{base}",
     }
     response = requests.post(url, headers=headers, json=data)
     if not response.ok:
-        print(f'Unable to get create a pull request ({response.status_code}): {response.reason}', file=sys.stderr)
+        utils.print_error(
+            f"Unable to get create a pull request ({response.status_code}): {response.reason}"
+        )
         exit(1)
 
     try:
-        pr_number = response.json()['number']
-        pr_url = response.json()['html_url']
+        pr_number = response.json()["number"]
+        pr_url = response.json()["html_url"]
     except KeyError as err:
-        print(f'Error ({err}) getting id from response: {response.json()}', file=sys.stderr)
+        utils.print_error(f"Error ({err}) getting id from response: {response.json()}")
         exit(1)
 
     return pr_number, pr_url
 
+
 def process_after_finish(branch):
-    subprocess.run(['git', 'push'])
-    if 'hotfix/' in branch or 'release/' in branch:
-        subprocess.run(['git', 'checkout', 'master'])
-        subprocess.run(['git', 'push'])
-        subprocess.run(['git', 'rebase', 'develop'])
-        subprocess.run(['git', 'push'])
-        subprocess.run(['git', 'push', '--tags'])
+    subprocess.run(["git", "push"])
+    if "hotfix/" in branch or "release/" in branch:
+        subprocess.run(["git", "checkout", "master"])
+        subprocess.run(["git", "push"])
+        subprocess.run(["git", "rebase", "develop"])
+        subprocess.run(["git", "push"])
+        subprocess.run(
+            ["git", "tag", "-d", "latest", "2>/dev/null"], shell=True, check=False
+        )
+        subprocess.run(["git", "tag", "-a", "latest", "-m", "latest"])
+        subprocess.run(
+            ["git", "push", "origin", "--delete", "latest", "2>/dev/null"],
+            shell=True,
+            check=False,
+        )
+        subprocess.run(["git", "push", "origin", "--tags"])
+
 
 def main(action, origin, branch):
     # Get GITHUB service token
-    token = utils.get_token() 
-    pr_number, pr_url = get_pr(token, branch)
+    token = utils.get_token()
+    pr = utils.get_pr(token, branch)
 
-    if action == 'publish':
-        if pr_number is None:
+    if action == "publish":
+        if pr is None:
             cr_pr = False
             while True:
-                response = input("Would you like to create a PR (Y/n)? ").strip().lower()
-                if response == 'y' or response == '':
+                response = (
+                    input("Would you like to create a PR (Y/n)? ").strip().lower()
+                )
+                if response == "y" or response == "":
                     cr_pr = True
                     break
-                elif response == 'n':
+                elif response == "n":
                     break
                 else:
-                    print("Invalid input. Please try again.")
+                    utils.print_warning("Invalid input. Please try again.")
             if cr_pr:
-                print('Creating a pull request..')
+                utils.print_info("Creating a pull request..")
                 pr_number, pr_url = create_pr(token, branch)
-                print(f'Created a pull request ({pr_number}): {pr_url}')
+                utils.print_success(f"Created a pull request ({pr_number}): {pr_url}")
         else:
-            print(f'Updating pull request: {pr_url}')
-    elif action == 'finish':
+            pr_url = pr["html_url"]
+            utils.print_info(f"Updating pull request {pr_url}..")
+    elif action == "finish":
         if pr_number is None:
-            print('You need to publish first (in order to create the PR)')
+            utils.print_error("You need to publish first (in order to create the PR)")
             exit(1)
 
         process_after_finish(branch)
 
-if __name__ == '__main__':
-    action = sys.argv[0].split('-')[-1]
+
+if __name__ == "__main__":
+    action = sys.argv[0].split("-")[-1]
     main(action, sys.argv[2], sys.argv[3])
