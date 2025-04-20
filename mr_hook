@@ -96,7 +96,7 @@ def main(action, origin, branch):
             pr_url = pr["html_url"]
             utils.print_info(f"Updating pull request {pr_url}..")
     elif action == "finish":
-        if pr_number is None:
+        if pr is None:
             utils.print_error("You need to publish first (in order to create the PR)")
             exit(1)
 
