@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.2.2] - 2025-04-20
 
+### Changed
+
+- Bold text for input
+
 ### Fixed
 
 - Using old (undefined) variable
