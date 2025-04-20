@@ -1,115 +1,65 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8; -*-
 
-import sys
 import os
+import subprocess
+import sys
 
 import requests
-import subprocess
 
 import utils
 
 
-def get_projet_prs(token, branch):
-    p = subprocess.Popen("git rev-parse --show-toplevel", stdout=subprocess.PIPE, shell=True)
-    (output, _) = p.communicate()
-    _ = p.wait()
-    repo = os.path.basename(output.decode()).strip()
-    owner = utils.get_github_owner_from_git()
-
-    url = f'https://api.github.com/repos/{owner}/{repo}/pulls'
-    headers = {
-            'Accept': 'application/vnd.github+json',
-            'Authorization': f'Bearer {token}',
-            'X-GitHub-Api-Version': '2022-11-28'
-    }
-    params = {
-            'head': f'{owner}:{branch}',
-    }
-    response = requests.get(url, params=params, headers=headers)
-
-    if not response.ok:
-        print(f'Unable to get pull requests ({response.status_code}): {response.reason}', file=sys.stderr)
-        exit(1)
-    jsonObj = response.json()
-
-    if len(jsonObj) <= 0:
-        return None
-
-    return jsonObj
-
-def get_pr(token, branch):
-    prs = get_projet_prs(token, branch)
-    if prs is None:
-        return None
-    pr_number = prs[0]['number']
-    
-    p = subprocess.Popen("git rev-parse --show-toplevel", stdout=subprocess.PIPE, shell=True)
-    (output, _) = p.communicate()
-    _ = p.wait()
-    repo = os.path.basename(output.decode()).strip()
-    owner = utils.get_github_owner_from_git()
-
-    url = f'https://api.github.com/repos/{owner}/{repo}/pulls/{pr_number}'
-    headers = {
-            'Accept': 'application/vnd.github+json',
-            'Authorization': f'Bearer {token}',
-            'X-GitHub-Api-Version': '2022-11-28'
-    }
-    params = {
-            'head': f'{owner}:{branch}',
-    }
-    response = requests.get(url, params=params, headers=headers)
-
-    if not response.ok:
-        print(f'Unable to get the pull request #{pr_number} ({response.status_code}): {response.reason}', file=sys.stderr)
-        exit(1)
-    jsonObj = response.json()
-
-    return jsonObj
-
 def msg_merge_pr(token, branch, pr_number):
-    p = subprocess.Popen("git rev-parse --show-toplevel", stdout=subprocess.PIPE, shell=True)
+    p = subprocess.Popen(
+        "git rev-parse --show-toplevel", stdout=subprocess.PIPE, shell=True
+    )
     (output, _) = p.communicate()
     _ = p.wait()
     repo = os.path.basename(output.decode()).strip()
     owner = utils.get_github_owner_from_git()
 
-    url = f'https://api.github.com/repos/{owner}/{repo}/pulls/{pr_number}'
+    url = f"https://api.github.com/repos/{owner}/{repo}/pulls/{pr_number}"
     headers = {
-        'Accept': 'application/vnd.github+json',
-        'Authorization': f'Bearer {token}',
-        'X-GitHub-Api-Version': '2022-11-28'
+        "Accept": "application/vnd.github+json",
+        "Authorization": f"Bearer {token}",
+        "X-GitHub-Api-Version": "2022-11-28",
     }
     data = {
-        'body': 'This PR has been merged via a git flow finish',
+        "body": "This PR has been merged via a git flow finish",
     }
     response = requests.patch(url, headers=headers, json=data)
 
     if not response.ok:
-        print(f'Unable to patch the pull request ({response.status_code}): {response.reason}', file=sys.stderr)
+        print(
+            f"Unable to patch the pull request ({response.status_code}): {response.reason}",
+            file=sys.stderr,
+        )
         exit(1)
+
 
 def main(action, origin, branch):
     # Get GITHUB service token
-    token = utils.get_token() 
-    pr = get_pr(token, branch)
+    token = utils.get_token()
+    pr = utils.get_pr(token, branch)
 
     if pr is None:
-        print('You need to publish first (in order to create the PR)')
+        print("You need to publish first (in order to create the PR)")
         exit(1)
-    if pr['mergeable'] == 'null':
-        print('A mergeability checking job is in progress..\n\
-            Wait fot the job to complete and resubmit the request!')
+    if pr["mergeable"] == "null":
+        print(
+            "A mergeability checking job is in progress..\n\
+            Wait fot the job to complete and resubmit the request!"
+        )
         exit(1)
-    elif pr['mergeable'] == 'false':
-        print('Unable to merge PR due to failed checks.')
+    elif pr["mergeable"] == "false":
+        print("Unable to merge PR due to failed checks.")
         exit(1)
 
     # update body of PR
-    msg_merge_pr(token, branch, pr['number'])
+    msg_merge_pr(token, branch, pr["number"])
 
 
-if __name__ == '__main__':
-    action = sys.argv[0].split('-')[-1]
+if __name__ == "__main__":
+    action = sys.argv[0].split("-")[-1]
     main(action, sys.argv[2], sys.argv[3])
