@@ -7,6 +7,22 @@ import sys
 import requests
 
 
+def print_error(msg: str):
+    print(f"\033[1;91mError: {msg}\033[0m", file=sys.stderr)
+
+
+def print_warning(msg: str):
+    print(f"\033[1;93Warning: {msg}\033[0m", file=sys.stderr)
+
+
+def print_info(msg: str):
+    print(f"\033[1;94mInfo: {msg}\033[0m")
+
+
+def print_success(msg: str):
+    print(f"\033[1;92mSuccess: {msg}\033[0m")
+
+
 def get_projet_prs(token, branch):
     p = subprocess.Popen(
         "git rev-parse --show-toplevel", stdout=subprocess.PIPE, shell=True

@@ -35,9 +35,8 @@ def create_pr(token, branch):
     }
     response = requests.post(url, headers=headers, json=data)
     if not response.ok:
-        print(
-            f"Unable to get create a pull request ({response.status_code}): {response.reason}",
-            file=sys.stderr,
+        utils.print_error(
+            f"Unable to get create a pull request ({response.status_code}): {response.reason}"
         )
         exit(1)
 
@@ -45,10 +44,7 @@ def create_pr(token, branch):
         pr_number = response.json()["number"]
         pr_url = response.json()["html_url"]
     except KeyError as err:
-        print(
-            f"Error ({err}) getting id from response: {response.json()}",
-            file=sys.stderr,
-        )
+        utils.print_error(f"Error ({err}) getting id from response: {response.json()}")
         exit(1)
 
     return pr_number, pr_url
@@ -77,7 +73,6 @@ def main(action, origin, branch):
     # Get GITHUB service token
     token = utils.get_token()
     pr = utils.get_pr(token, branch)
-    # pr_number, pr_url = utils.get_pr(token, branch)
 
     if action == "publish":
         if pr is None:
@@ -92,17 +87,17 @@ def main(action, origin, branch):
                 elif response == "n":
                     break
                 else:
-                    print("Invalid input. Please try again.")
+                    utils.print_warning("Invalid input. Please try again.")
             if cr_pr:
-                print("Creating a pull request..")
+                utils.print_info("Creating a pull request..")
                 pr_number, pr_url = create_pr(token, branch)
-                print(f"Created a pull request ({pr_number}): {pr_url}")
+                utils.print_success(f"Created a pull request ({pr_number}): {pr_url}")
         else:
             pr_url = pr["html_url"]
-            print(f"Updating pull request: {pr_url}")
+            utils.print_info(f"Updating pull request {pr_url}..")
     elif action == "finish":
         if pr_number is None:
-            print("You need to publish first (in order to create the PR)")
+            utils.print_error("You need to publish first (in order to create the PR)")
             exit(1)
 
         process_after_finish(branch)

@@ -31,9 +31,8 @@ def msg_merge_pr(token, branch, pr_number):
     response = requests.patch(url, headers=headers, json=data)
 
     if not response.ok:
-        print(
-            f"Unable to patch the pull request ({response.status_code}): {response.reason}",
-            file=sys.stderr,
+        utils.print_error(
+            f"Unable to patch the pull request ({response.status_code}): {response.reason}"
         )
         exit(1)
 
@@ -44,16 +43,16 @@ def main(action, origin, branch):
     pr = utils.get_pr(token, branch)
 
     if pr is None:
-        print("You need to publish first (in order to create the PR)")
+        utils.print_warning("You need to publish first (in order to create the PR)")
         exit(1)
     if pr["mergeable"] == "null":
-        print(
+        utils.print_warning(
             "A mergeability checking job is in progress..\n\
             Wait fot the job to complete and resubmit the request!"
         )
         exit(1)
     elif pr["mergeable"] == "false":
-        print("Unable to merge PR due to failed checks.")
+        utils.print_error("Unable to merge PR due to failed checks.")
         exit(1)
 
     # update body of PR

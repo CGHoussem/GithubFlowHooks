@@ -12,7 +12,7 @@ def main(action, origin, branch):
     try:
         _ = utils.get_token()
     except Exception as ex:
-        print(f"Unable to get GitHub PAT: {str(ex)}", file=sys.stderr)
+        utils.print_error(f"Unable to get GitHub PAT: {str(ex)}", file=sys.stderr)
         exit(1)
 
 
