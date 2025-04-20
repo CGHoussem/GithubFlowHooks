@@ -79,7 +79,9 @@ def main(action, origin, branch):
             cr_pr = False
             while True:
                 response = (
-                    input("Would you like to create a PR (Y/n)? ").strip().lower()
+                    input("\033[1;37mWould you like to create a PR (Y/n)? \033[0m")
+                    .strip()
+                    .lower()
                 )
                 if response == "y" or response == "":
                     cr_pr = True
@@ -96,7 +98,7 @@ def main(action, origin, branch):
             pr_url = pr["html_url"]
             utils.print_info(f"Updating pull request {pr_url}..")
     elif action == "finish":
-        if pr_number is None:
+        if pr is None:
             utils.print_error("You need to publish first (in order to create the PR)")
             exit(1)
 
