@@ -26,3 +26,20 @@ The owner of the "GithubFlowHooks" project is "CGHoussem"
 
 
 **The PAT should at least have the "Pull requests" and "Contents" _Read and write_ repository permissions.**
+
+## Additional features
+
+
+1. The `latest` tag
+
+You may need the need to create a latest tag to your hotfixes / releases. This is achievable by adding the option `use-latest` to the gitflow options config, like so:
+
+```
+[gitflow "options"]
+	use-latest = true
+```
+
+For the boolean gitflow options:
+
+- The **true** values can be expressed using the following values: '1', 'yes', 'true', 'on'
+- The **false** values can be expressed using the following values: '0', 'no', 'false', 'off'

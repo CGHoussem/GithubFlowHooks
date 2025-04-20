@@ -50,6 +50,17 @@ def create_pr(token, branch):
     return pr_number, pr_url
 
 
+def _create_latest_tag():
+    utils.print_info('Creating "latest" tag..')
+    subprocess.run(["git tag -d latest 2>/dev/null"], shell=True, check=False)
+    subprocess.run(["git", "tag", "-a", "latest", "-m", "latest"])
+    subprocess.run(
+        ["git push origin --delete latest 2>/dev/null"],
+        shell=True,
+        check=False,
+    )
+
+
 def process_after_finish(branch):
     subprocess.run(["git", "push"])
     if "hotfix/" in branch or "release/" in branch:
@@ -57,15 +68,14 @@ def process_after_finish(branch):
         subprocess.run(["git", "push"])
         subprocess.run(["git", "rebase", "develop"])
         subprocess.run(["git", "push"])
-        subprocess.run(
-            ["git", "tag", "-d", "latest", "2>/dev/null"], shell=True, check=False
-        )
-        subprocess.run(["git", "tag", "-a", "latest", "-m", "latest"])
-        subprocess.run(
-            ["git", "push", "origin", "--delete", "latest", "2>/dev/null"],
-            shell=True,
-            check=False,
-        )
+        try:
+            use_latest = utils.get_option("use-latest", bool)
+        except Exception as err:
+            utils.print_warning(
+                f"Exception caught upon attempt on creating latest tag: {err.message}"
+            )
+        if use_latest or False:
+            _create_latest_tag()
         subprocess.run(["git", "push", "origin", "--tags"])
 
 
