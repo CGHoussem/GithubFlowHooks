@@ -133,7 +133,7 @@ def get_token():
         token = gitconfig.get('gitflow "token"', option=owner)
         if token and len(token) == 0:
             raise Exception(
-                f'Github token of the owner "{owner}" is not configured correctly'
+                f"Github token of the owner '{owner}' is not configured correctly"
             )
     except configparser.NoOptionError as err:
         raise Exception(err.message)
@@ -141,3 +141,34 @@ def get_token():
         raise Exception(err.message)
 
     return token
+
+
+def get_option(opt: str, opt_type: type):
+    opt_value = None
+
+    gitconfig = configparser.ConfigParser()
+    gitconfig.read(f"{os.getenv('HOME')}/.gitconfig")
+    try:
+        if opt_type is bool:
+            opt_value = gitconfig.getboolean('gitflow "options"', option=opt)
+        elif opt_type is int:
+            opt_value = gitconfig.getint('gitflow "options"', option=opt)
+        elif opt_type is float:
+            opt_value = gitconfig.getfloat('gitflow "options"', option=opt)
+        else:
+            opt_value = gitconfig.get('gitflow "options"', option=opt)
+    except configparser.ValueError as err:
+        if opt_type is bool:
+            # default for boolean values is False
+            print_warning(
+                f"Gitflow option '{opt}' value is not recognized (defaulted to 'false')"
+            )
+            opt_value = False
+        else:
+            raise Exception(err.message)
+    except configparser.NoOptionError as err:
+        raise Exception(err.message)
+    except configparser.NoSectionError as err:
+        raise Exception(err.message)
+
+    return opt_value
