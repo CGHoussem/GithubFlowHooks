@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8; -*-
 
-import os
 import subprocess
 import sys
 
@@ -16,7 +15,7 @@ def create_pr(token, branch):
     )
     (output, _) = p.communicate()
     _ = p.wait()
-    repo = os.path.basename(output.decode()).strip()
+    repo = utils.get_repo_name_from_git()
     base = "develop"
     if "hotfix/" in branch or "release/" in branch:
         base = "master"
@@ -29,7 +28,7 @@ def create_pr(token, branch):
         "X-GitHub-Api-Version": "2022-11-28",
     }
     data = {
-        "title": f"Merge {branch} to {base}",
+        "title": f"Request to merge {branch} to {base}",
         "head": f"{owner}:{branch}",
         "base": f"{base}",
     }
@@ -80,7 +79,6 @@ def process_after_finish(branch):
 
 
 def main(action, origin, branch):
-    # Get GITHUB service token
     token = utils.get_token()
     pr = utils.get_pr(token, branch)
 

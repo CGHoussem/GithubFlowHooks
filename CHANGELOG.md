@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.1] - 2025-05-04
+
+### Changed
+
+- Retrieving the git repository name from it's remote config (it was from folder name)
+
 ## [0.3.0] - 2025-04-21
 
 ### Added
@@ -55,7 +61,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Process after `git flow finish` :
   - Push **develop** branch's commits
-  - \+ Instructions to execute ONLY on *hotfixes* and *releases*
+  - \+ Instructions to execute ONLY on _hotfixes_ and _releases_
   - Push **master** branch's commits
   - Rebase the **master** branch to the **develop** branch
   - Push **master** branch's commits

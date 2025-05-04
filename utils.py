@@ -23,13 +23,13 @@ def print_success(msg: str):
     print(f"\033[1;92mSuccess: {msg}\033[0m")
 
 
-def get_projet_prs(token, branch):
+def get_project_prs(token, branch):
     p = subprocess.Popen(
         "git rev-parse --show-toplevel", stdout=subprocess.PIPE, shell=True
     )
     (output, _) = p.communicate()
     _ = p.wait()
-    repo = os.path.basename(output.decode()).strip()
+    repo = get_repo_name_from_git()
     owner = get_github_owner_from_git()
 
     url = f"https://api.github.com/repos/{owner}/{repo}/pulls"
@@ -44,9 +44,8 @@ def get_projet_prs(token, branch):
     response = requests.get(url, params=params, headers=headers)
 
     if not response.ok:
-        print(
-            f"Unable to get pull requests ({response.status_code}): {response.reason}",
-            file=sys.stderr,
+        print_error(
+            f"Unable to get pull requests ({response.status_code}): {response.reason}"
         )
         exit(1)
     jsonObj = response.json()
@@ -58,7 +57,7 @@ def get_projet_prs(token, branch):
 
 
 def get_pr(token, branch):
-    prs = get_projet_prs(token, branch)
+    prs = get_project_prs(token, branch)
     if prs is None:
         return None
     pr_number = prs[0]["number"]
@@ -68,7 +67,7 @@ def get_pr(token, branch):
     )
     (output, _) = p.communicate()
     _ = p.wait()
-    repo = os.path.basename(output.decode()).strip()
+    repo = get_repo_name_from_git()
     owner = get_github_owner_from_git()
 
     url = f"https://api.github.com/repos/{owner}/{repo}/pulls/{pr_number}"
@@ -83,14 +82,32 @@ def get_pr(token, branch):
     response = requests.get(url, params=params, headers=headers)
 
     if not response.ok:
-        print(
-            f"Unable to get the pull request #{pr_number} ({response.status_code}): {response.reason}",
-            file=sys.stderr,
+        print_error(
+            f"Unable to get the pull request #{pr_number} ({response.status_code}): {response.reason}"
         )
         exit(1)
     jsonObj = response.json()
 
     return jsonObj
+
+
+def get_repo_name_from_git():
+    try:
+        remote_url_bytes = subprocess.check_output(
+            ["git", "config", "--get", "remote.origin.url"]
+        )
+        remote_url = remote_url_bytes.decode().strip()
+    except subprocess.CalledProcessError:
+        print_error("Failed to retrieve Git remote URL.")
+        return None
+
+    repo_name_pattern = r".+\/(.+).git$"
+    if re.match(repo_name_pattern, remote_url):
+        repo_name = re.match(repo_name_pattern, remote_url).group(1)
+    else:
+        print_error("Unable to find the repository name from the git remote URL.")
+        return None
+    return repo_name
 
 
 def get_github_owner_from_git():
@@ -101,7 +118,7 @@ def get_github_owner_from_git():
         )
         remote_url = remote_url_bytes.decode().strip()
     except subprocess.CalledProcessError:
-        print("Failed to retrieve Git remote URL.")
+        print_error("Failed to retrieve Git remote URL.")
         return None
 
     # Regular expression patterns for matching GitHub repository URLs
@@ -114,7 +131,7 @@ def get_github_owner_from_git():
     elif re.match(https_pattern, remote_url):
         owner_name = re.match(https_pattern, remote_url).group(1)
     else:
-        print("Remote URL is not a GitHub repository.")
+        print_error("Remote URL is not a GitHub repository.")
         return None
 
     return owner_name
