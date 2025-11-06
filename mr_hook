@@ -18,7 +18,7 @@ def create_pr(token, branch):
     repo = utils.get_repo_name_from_git()
     base = "develop"
     if "hotfix/" in branch or "release/" in branch:
-        base = "master"
+        base = utils.get_master_branch_name()
     owner = utils.get_github_owner_from_git()
 
     url = f"https://api.github.com/repos/{owner}/{repo}/pulls"
@@ -63,7 +63,7 @@ def _create_latest_tag():
 def process_after_finish(branch):
     subprocess.run(["git", "push"])
     if "hotfix/" in branch or "release/" in branch:
-        subprocess.run(["git", "checkout", "master"])
+        subprocess.run(["git", "checkout", utils.get_master_branch_name()])
         subprocess.run(["git", "push"])
         subprocess.run(["git", "rebase", "develop"])
         subprocess.run(["git", "push"])

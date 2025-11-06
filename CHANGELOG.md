@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.2] - 2025-11-06
+
+### Fixed
+
+- Retrieve git master branch name dynamically (instead of hardcoded "master")
+
 ## [0.3.1] - 2025-05-04
 
 ### Changed
