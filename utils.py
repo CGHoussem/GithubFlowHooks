@@ -83,7 +83,9 @@ def get_pr(token, branch):
 
     if not response.ok:
         print_error(
-            f"Unable to get the pull request #{pr_number} ({response.status_code}): {response.reason}"
+            f"Unable to get the pull request #{pr_number} ({response.status_code}): {
+                response.reason
+            }"
         )
         exit(1)
     jsonObj = response.json()
@@ -159,6 +161,7 @@ def get_token():
 
     return token
 
+
 def get_master_branch_name():
     branch_name = "master"
 
@@ -170,12 +173,17 @@ def get_master_branch_name():
             raise Exception("Master branch name is not configured correctly")
     except configparser.NoOptionError:
         # default to 'master' if not set
-        print_warning("Master branch name is not set in git config, defaulting to 'master'")
+        print_warning(
+            "Master branch name is not set in git config, defaulting to 'master'"
+        )
     except configparser.NoSectionError:
         # default to 'master' if not set
-        print_warning("Master branch name is not set in git config, defaulting to 'master'")
+        print_warning(
+            "Master branch name is not set in git config, defaulting to 'master'"
+        )
 
     return branch_name
+
 
 def get_option(opt: str, opt_type: type):
     opt_value = None

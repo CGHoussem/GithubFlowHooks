@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Retrieve git master branch name dynamically (instead of hardcoded "master")
+- `use-latest` option not working properly
 
 ## [0.3.1] - 2025-05-04
 

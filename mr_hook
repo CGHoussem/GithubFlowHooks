@@ -35,7 +35,9 @@ def create_pr(token, branch):
     response = requests.post(url, headers=headers, json=data)
     if not response.ok:
         utils.print_error(
-            f"Unable to get create a pull request ({response.status_code}): {response.reason}"
+            f"Unable to get create a pull request ({response.status_code}): {
+                response.reason
+            }"
         )
         exit(1)
 
@@ -69,12 +71,12 @@ def process_after_finish(branch):
         subprocess.run(["git", "push"])
         try:
             use_latest = utils.get_option("use-latest", bool)
+            if use_latest:
+                _create_latest_tag()
         except Exception as err:
             utils.print_warning(
                 f"Exception caught upon attempt on creating latest tag: {err.message}"
             )
-        if use_latest or False:
-            _create_latest_tag()
         subprocess.run(["git", "push", "origin", "--tags"])
 
 
