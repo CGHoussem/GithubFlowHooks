@@ -165,25 +165,23 @@ def get_token():
 def get_master_branch_name():
     branch_name = "master"
 
-    gitconfig = configparser.ConfigParser()
-    gitconfig.read("./.git/config")
     try:
-        branch_name = gitconfig.get('gitflow "branch"', option="master")
-        if not branch_name or len(branch_name) == 0:
-            print_warning(
-                "Master branch name is empty in git config, defaulting to 'master'"
-            )
-            branch_name = "master"
-    except configparser.NoOptionError:
-        # default to 'master' if not set
+        branch_name = (
+            subprocess.check_output(["git", "config", "--get", "gitflow.branch.master"])
+            .decode()
+            .strip()
+        )
+    except subprocess.CalledProcessError:
         print_warning(
             "Master branch name is not set in git config, defaulting to 'master'"
         )
-    except configparser.NoSectionError:
-        # default to 'master' if not set
+        return branch_name
+
+    if not branch_name:
         print_warning(
-            "Master branch name is not set in git config, defaulting to 'master'"
+            "Master branch name is empty in git config, defaulting to 'master'"
         )
+        return "master"
 
     return branch_name
 
