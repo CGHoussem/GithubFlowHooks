@@ -75,7 +75,7 @@ def process_after_finish(branch):
                 _create_latest_tag()
         except Exception as err:
             utils.print_warning(
-                f"Exception caught upon attempt on creating latest tag: {err.message}"
+                f"Exception caught upon attempt on creating latest tag: {str(err)}"
             )
         subprocess.run(["git", "push", "origin", "--tags"])
 

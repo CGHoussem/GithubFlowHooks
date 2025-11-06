@@ -169,8 +169,11 @@ def get_master_branch_name():
     gitconfig.read("./.git/config")
     try:
         branch_name = gitconfig.get('gitflow "branch"', option="master")
-        if branch_name and len(branch_name) == 0:
-            raise Exception("Master branch name is not configured correctly")
+        if not branch_name or len(branch_name) == 0:
+            print_warning(
+                "Master branch name is empty in git config, defaulting to 'master'"
+            )
+            branch_name = "master"
     except configparser.NoOptionError:
         # default to 'master' if not set
         print_warning(
