@@ -55,7 +55,7 @@ def main(action, origin, branch):
         exit(1)
 
     # update body of PR
-    msg_merge_pr(token, branch, pr["number"])
+    # msg_merge_pr(token, branch, pr["number"])
 
 
 if __name__ == "__main__":

@@ -83,7 +83,9 @@ def get_pr(token, branch):
 
     if not response.ok:
         print_error(
-            f"Unable to get the pull request #{pr_number} ({response.status_code}): {response.reason}"
+            f"Unable to get the pull request #{pr_number} ({response.status_code}): {
+                response.reason
+            }"
         )
         exit(1)
     jsonObj = response.json()
@@ -158,6 +160,30 @@ def get_token():
         raise Exception(err.message)
 
     return token
+
+
+def get_master_branch_name():
+    branch_name = "master"
+
+    try:
+        branch_name = (
+            subprocess.check_output(["git", "config", "--get", "gitflow.branch.master"])
+            .decode()
+            .strip()
+        )
+    except subprocess.CalledProcessError:
+        print_warning(
+            "Master branch name is not set in git config, defaulting to 'master'"
+        )
+        return branch_name
+
+    if not branch_name:
+        print_warning(
+            "Master branch name is empty in git config, defaulting to 'master'"
+        )
+        return "master"
+
+    return branch_name
 
 
 def get_option(opt: str, opt_type: type):
