@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8; -*-
 
+import subprocess
 import sys
 
 import utils
@@ -10,9 +11,45 @@ def main(action, origin, branch):
     print(action, origin, branch)
 
     try:
-        _ = utils.get_token()
+        token = utils.get_token()
     except Exception as ex:
         utils.print_error(f"Unable to get GitHub PAT: {str(ex)}", file=sys.stderr)
+        exit(1)
+
+    # Check if CHANGELOG.md is in the publish commit
+    changelog_in_commit = (
+        subprocess.run(
+            ["git", "diff", "--name-only", "HEAD~1", "HEAD"],
+            capture_output=True,
+            text=True,
+        )
+        .stdout.strip()
+        .split("\n")
+    )
+    if "CHANGELOG.md" in changelog_in_commit:
+        utils.print_info("CHANGELOG.md found in the commit, skipping generation.")
+        return
+    # Generate CHANGELOG.md if configured
+    gen_changelog = utils.get_option("generate-changelog", bool)
+    if gen_changelog:
+        utils.print_info("Generating changelog..")
+        subprocess.run(["git", "cliff", "--github-token", token, "-o", "CHANGELOG.md"])
+        subprocess.run(["git", "cliff", "--github-token", token, "--strip", "all"])
+        prompt = input(
+            "\033[1;37mDo you want to further make changes to the CHANGELOG.md (y/N)? \033[0m"
+        ).strip()
+        if prompt.lower() == "y":
+            utils.print_warning("Aborting publishing process.")
+            exit(1)
+        subprocess.run(["git", "add", "CHANGELOG.md"])
+        subprocess.run(["git", "commit", "-S", "--amend"])
+        subprocess.run(["git", "push", "--force-with-lease"])
+    # ask user if he wants to continue
+    prompt = input(
+        "\033[1;37mDo you want to continue with publishing the branch (Y)? \033[0m"
+    ).strip()
+    if prompt.lower() != "y" and prompt != "":
+        utils.print_warning("Aborting publishing process.")
         exit(1)
 
 

@@ -200,7 +200,7 @@ def get_option(opt: str, opt_type: type):
             opt_value = gitconfig.getfloat('gitflow "options"', option=opt)
         else:
             opt_value = gitconfig.get('gitflow "options"', option=opt)
-    except configparser.ValueError as err:
+    except configparser.ParsingError as err:
         if opt_type is bool:
             # default for boolean values is False
             print_warning(
